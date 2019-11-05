@@ -63,6 +63,10 @@ package java.util;
  * Java Collections Framework</a>.
  *
  * @since 1.4
+ *
+ * 标记支持随机访问元素，也就是底层是数组实现的集合
+ *
+ * 遍历时使用循环而不适用迭代器
  */
 public interface RandomAccess {
 }
