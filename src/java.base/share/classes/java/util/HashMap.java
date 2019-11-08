@@ -630,14 +630,19 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      */
     final Node<K,V> getNode(int hash, Object key) {
         Node<K,V>[] tab; Node<K,V> first, e; int n; K k;
+        // 拿到 table 中对应位置的节点 p
         if ((tab = table) != null && (n = tab.length) > 0 &&
             (first = tab[(n - 1) & hash]) != null) {
+            // 如果该位置头结点就是要找的，直接返回
             if (first.hash == hash && // always check first node
                 ((k = first.key) == key || (key != null && key.equals(k))))
                 return first;
+            // 如果后边还有
             if ((e = first.next) != null) {
+                // 如果是树 去树里找
                 if (first instanceof TreeNode)
                     return ((TreeNode<K,V>)first).getTreeNode(hash, key);
+                // 如果是链表 遍历查找
                 do {
                     if (e.hash == hash &&
                         ((k = e.key) == key || (key != null && key.equals(k))))
@@ -922,17 +927,26 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      */
     final Node<K,V> removeNode(int hash, Object key, Object value,
                                boolean matchValue, boolean movable) {
-        Node<K,V>[] tab; Node<K,V> p; int n, index;
+        Node<K,V>[] tab; Node<K,V> p;
+        int n, index;
+        // table非空校验，拿到 hash 对应位置的 p 节点，并且 p 节点不为null
         if ((tab = table) != null && (n = tab.length) > 0 &&
             (p = tab[index = (n - 1) & hash]) != null) {
-            Node<K,V> node = null, e; K k; V v;
+
+            Node<K,V> node = null, e; K k; V v; // 目标节点
+
+            // 通过 hash 和 equals 判断 p 节点 就是 目标节点
             if (p.hash == hash &&
                 ((k = p.key) == key || (key != null && key.equals(k))))
                 node = p;
+            // 如果不是
             else if ((e = p.next) != null) {
+                // 如果是树
                 if (p instanceof TreeNode)
                     node = ((TreeNode<K,V>)p).getTreeNode(hash, key);
+                // 链表
                 else {
+                    // 遍历查找目标节点
                     do {
                         if (e.hash == hash &&
                             ((k = e.key) == key ||
@@ -944,30 +958,43 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                     } while ((e = e.next) != null);
                 }
             }
+            // 如果找到了目标节点
+            // 是否要校验 value 相等，如果 matchValue 为 true 则进行校验
             if (node != null && (!matchValue || (v = node.value) == value ||
                                  (value != null && value.equals(v)))) {
+                // 如果是树 则在树中删除
                 if (node instanceof TreeNode)
                     ((TreeNode<K,V>)node).removeTreeNode(this, tab, movable);
+                // 如果node 就是 p ， 也就是链表的头结点，则将下一个节点放在 table 该位置中，实现移除
                 else if (node == p)
                     tab[index] = node.next;
+                // 如果不是头结点，把 p 的 next 指向 node 的 next，实现移除
                 else
                     p.next = node.next;
+                // 增加修改次数
                 ++modCount;
+                // size - 1
                 --size;
+                // 移除node的回调
                 afterNodeRemoval(node);
+                // 返回被移除的node
                 return node;
             }
         }
+        // 没找到 就返回null
         return null;
     }
 
     /**
      * Removes all of the mappings from this map.
      * The map will be empty after this call returns.
+     *
+     * 清空
      */
     public void clear() {
         Node<K,V>[] tab;
         modCount++;
+        // 遍历 table 置空
         if ((tab = table) != null && size > 0) {
             size = 0;
             for (int i = 0; i < tab.length; ++i)
@@ -979,21 +1006,28 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * Returns {@code true} if this map maps one or more keys to the
      * specified value.
      *
+     * 是否包含某个值
+     *
      * @param value value whose presence in this map is to be tested
      * @return {@code true} if this map maps one or more keys to the
      *         specified value
      */
     public boolean containsValue(Object value) {
         Node<K,V>[] tab; V v;
+        // 校验 table 非空
         if ((tab = table) != null && size > 0) {
+            // 遍历table
             for (Node<K,V> e : tab) {
+                // 遍历链表或树
                 for (; e != null; e = e.next) {
+                    // 找到相等的值，返回true
                     if ((v = e.value) == value ||
                         (value != null && value.equals(v)))
                         return true;
                 }
             }
         }
+        // table 是空直接返回false
         return false;
     }
 
@@ -1258,6 +1292,12 @@ public class HashMap<K,V> extends AbstractMap<K,V>
         return putVal(hash(key), key, value, true, true);
     }
 
+    /**
+     * 移除，但还需要校验value也相等
+     * @param key
+     * @param value
+     * @return
+     */
     @Override
     public boolean remove(Object key, Object value) {
         return removeNode(hash(key), key, value, true, true) != null;
